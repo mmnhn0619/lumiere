@@ -206,4 +206,5 @@ class Handler(SimpleHTTPRequestHandler):
 print('Lumiere を起動しました: http://127.0.0.1:8000')
 print('APIキー認証モード（.env を読み込みます）')
 print('終了するときは、この黒い画面で Ctrl + C を押してください。')
-ThreadingHTTPServer(('127.0.0.1', 8000), Handler).serve_forever()
+port = int(os.environ.get("PORT", 8000))
+ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
