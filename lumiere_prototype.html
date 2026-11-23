@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eaf3fb">
+<title>Lumière | 推し活カレンダー</title>
+<style>
+:root{--navy:#233e5b;--blue:#789abb;--pale:#eaf3fb;--line:#d9e5ef;--white:#fff;--muted:#7890a8;--shadow:0 8px 28px #29496712}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#f7fbff,#eaf3fb);color:var(--navy);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+.app{max-width:900px;margin:auto;padding:18px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{font-family:Georgia,serif;font-size:29px;letter-spacing:1.5px;color:#315474}.tag{font-size:10px;letter-spacing:2px;color:#7895b1;margin-top:2px}
+.actions{display:flex;gap:8px}.iconbtn,.btn{border:1px solid var(--line);background:#ffffffdf;color:var(--navy);border-radius:13px;padding:10px 13px;font-size:13px;cursor:pointer}.primary{background:#426b91;color:white;border-color:#426b91}
+.hero{height:118px;border-radius:20px;background:linear-gradient(110deg,#dcebf8,#f5f9fd);background-position:center;background-size:cover;display:flex;align-items:end;padding:15px 18px;margin-bottom:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#edf6f0c9,#edf6f033)}
+.heroText{position:relative;z-index:1}.hero small{font-size:10px;letter-spacing:2px;color:#527391}.hero h1{margin:4px 0 0;font-size:21px;font-weight:600;color:#244563}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin:10px 2px 12px}.month{font-size:23px;font-weight:650;letter-spacing:.3px}.month span{font-size:12px;color:var(--muted);margin-left:7px;font-weight:400}
+.monthnav{display:flex;gap:6px}.monthnav button{width:34px;height:34px;border:1px solid var(--line);border-radius:11px;background:white;color:var(--navy);font-size:18px}
+.calendar{background:#ffffffed;border:1px solid #e1eaf2;border-radius:19px;padding:10px 8px 12px;box-shadow:var(--shadow);overflow:hidden}
+.weekdays,.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.weekdays div{text-align:center;font-size:11px;color:#8197ad;padding:8px 0 10px}
+.week{position:relative;border-top:1px solid #edf2f7;min-height:100px}
+.day{min-height:100px;padding:8px 3px 4px;text-align:center;position:relative;border-right:1px solid #f0f4f8}
+.day:last-child{border-right:0}.daynum{font-size:12px;display:inline-flex;width:25px;height:25px;align-items:center;justify-content:center;border-radius:50%}
+.day.other .daynum{color:#c0ccd7}.day.today .daynum{background:#416b91;color:white}.day.selected .daynum{outline:1px solid #789abb}
+.bars{position:absolute;left:0;right:0;top:38px;pointer-events:none}
+.bar{position:absolute;height:17px;border-radius:6px;padding:1px 5px;color:white;font-size:10px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;cursor:pointer;box-shadow:0 1px 3px #193a5518}
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:13px 5px 2px;color:#7189a1;font-size:11px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.below{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.panel{background:#ffffffdc;border:1px solid #e1eaf2;border-radius:17px;padding:14px;box-shadow:var(--shadow)}.panel h3{font-size:13px;margin:0 0 10px}.hint{font-size:11px;color:#8297aa;line-height:1.7}.upcoming{font-size:12px;line-height:1.9;color:#486987}
+footer{text-align:center;color:#91a5b8;font-size:10px;padding:18px 0}
+dialog{border:0;border-radius:20px;padding:0;width:min(92vw,430px);box-shadow:0 20px 70px #16365345;color:var(--navy)}dialog::backdrop{background:#18334e66}.modal{padding:20px}.modal h2{font-size:19px;margin:0 0 15px}.field{display:block;margin:11px 0}.field span{display:block;font-size:11px;color:#7189a1;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:#f9fcff;color:var(--navy);font:inherit;font-size:14px}.field textarea{min-height:65px}.formrow{display:grid;grid-template-columns:1fr 1fr;gap:9px}.modalActions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}.delete{margin-right:auto;color:#a35b69;border-color:#eed9df}
+@media(max-width:560px){.app{padding:14px 10px 30px}.hero{height:100px}.month{font-size:20px}.calendar{padding:7px 4px 10px}.week{min-height:91px}.day{min-height:91px;padding-top:6px}.bar{font-size:9px;height:16px;line-height:14px;padding:1px 3px}.below{grid-template-columns:1fr}.iconbtn{padding:9px 10px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div><div class="brand">Lumière</div><div class="tag">MY FAVORITE SCHEDULE</div></div>
+ <div class="actions">
+ <button class="iconbtn" id="bgBtn">写真背景</button>
+ <button class="iconbtn" id="exportBtn">バックアップ</button>
+ <button class="iconbtn" id="importBtn">読み込み</button>
+<button class="iconbtn" id="worksBtn">作品管理</button>
+<button class="iconbtn" id="searchBtn">新着情報を探す</button>
+ <input type="file" id="importFile" accept=".json,application/json" hidden>
+ <button class="btn primary" id="addBtn">＋ 予定を追加</button>
+</div>
+</header>
+<div class="hero" id="hero"><div class="heroText"><small>YOUR DAYS, YOUR FAVORITES</small><h1>好きな予定を、ひとつに。</h1></div></div>
+<div class="toolbar"><div class="month" id="monthLabel"></div><div class="monthnav"><button id="prev">‹</button><button id="today">今</button><button id="next">›</button></div></div>
+<div class="calendar">
+ <div class="weekdays"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+ <div id="weeks"></div>
+ <div class="legend" id="legend"></div>
+</div>
+<div class="below">
+ <section class="panel"><h3>この月の予定</h3><div class="upcoming" id="upcoming">予定を登録すると、ここに表示されます。</div></section>
+ <section class="panel"><h3>使い方メモ</h3><div class="hint">・「＋ 予定を追加」から開始日と終了日を入力<br>・期間予定はカレンダー上で横長の帯になります<br>・帯をタップすると編集できます<br>・写真背景はこの端末のブラウザ内に保存されます</div></section>
+</div>
+<footer> LUMIÈRE · YOUR PERSONAL FAN SCHEDULE </footer>
+</div>
+<input type="file" id="bgFile" accept="image/*" hidden>
+<dialog id="eventDialog"><form class="modal" id="eventForm">
+ <h2 id="dialogTitle">予定を追加</h2><input type="hidden" id="eventId">
+ <label class="field"><span>予定の名前 *</span><input id="title" required maxlength="80" placeholder="例：作品名 コラボカフェ"></label>
+ <div class="formrow">
+  <label class="field"><span>開始日 *</span><input id="start" type="date" required></label>
+  <label class="field"><span>終了日 *</span><input id="end" type="date" required></label>
+ </div>
+ <label class="field">
+  <span>繰り返し</span>
+  <select id="repeat">
+   <option value="none">繰り返さない</option>
+   <option value="yearly">毎年</option>
+   <option value="monthly">毎月（同じ日付）</option>
+   <option value="weekly">毎週（曜日を指定）</option>
+   <option value="monthlyNth">毎月（第○曜日・最終曜日）</option>
+  </select>
+ </label>
+
+ <div id="repeatOptions" hidden>
+  <label class="field">
+   <span>繰り返し終了日（空欄なら無期限）</span>
+   <input id="repeatUntil" type="date">
+  </label>
+
+  <div id="weeklyOptions" class="field" hidden>
+   <span>繰り返す曜日</span>
+   <div style="display:flex;gap:9px;flex-wrap:wrap">
+    <label><input type="checkbox" name="weekDay" value="0"> 日</label>
+    <label><input type="checkbox" name="weekDay" value="1"> 月</label>
+    <label><input type="checkbox" name="weekDay" value="2"> 火</label>
+    <label><input type="checkbox" name="weekDay" value="3"> 水</label>
+    <label><input type="checkbox" name="weekDay" value="4"> 木</label>
+    <label><input type="checkbox" name="weekDay" value="5"> 金</label>
+    <label><input type="checkbox" name="weekDay" value="6"> 土</label>
+   </div>
+  </div>
+
+  <div id="nthOptions" class="formrow" hidden>
+   <label class="field">
+    <span>何回目？</span>
+    <select id="repeatNth">
+     <option value="1">第1</option>
+     <option value="2">第2</option>
+     <option value="3">第3</option>
+     <option value="4">第4</option>
+     <option value="last">最終</option>
+    </select>
+   </label>
+   <label class="field">
+    <span>曜日</span>
+    <select id="repeatWeekday">
+     <option value="0">日曜日</option>
+     <option value="1">月曜日</option>
+     <option value="2">火曜日</option>
+     <option value="3">水曜日</option>
+     <option value="4">木曜日</option>
+     <option value="5">金曜日</option>
+     <option value="6">土曜日</option>
+    </select>
+   </label>
+  </div>
+ </div>
+
+ <div class="formrow">
+  <label class="field"><span>カテゴリ</span><select id="category"><option value="event">イベント</option><option value="goods">グッズ</option><option value="birthday">記念日・誕生日</option><option value="daily">日常</option></select></label>
+  <label class="field"><span>色</span><select id="color"><option value="#648bb3">ブルー</option><option value="#8aa6c2">水色</option><option value="#a58bb5">ラベンダー</option><option value="#c58fa8">ローズ</option><option value="#7caaa5">ミント</option><option value="#9b9eae">グレー</option></select></label>
+ </div>
+ <label class="field"><span>メモ・URL（任意）</span><textarea id="memo" placeholder="会場、予約ページ、受付時間など"></textarea></label>
+ <div class="modalActions"><button type="button" class="iconbtn delete" id="deleteBtn" hidden>削除</button><button type="button" class="iconbtn" id="cancelBtn">キャンセル</button><button class="btn primary" type="submit">保存する</button></div>
+</form></dialog>
+<dialog id="worksDialog">
+ <form class="modal" id="worksForm">
+  <h2>作品管理</h2>
+  <p class="hint">推し活している作品を登録できます。</p>
+
+  <label class="field">
+   <span>作品名</span>
+   <input id="workName" maxlength="100" placeholder="例：文豪ストレイドッグス">
+  </label>
+
+  <button class="btn primary" type="submit">＋ 作品を追加</button>
+
+  <h3 style="margin-top:22px">登録済み作品</h3>
+  <div id="worksList" class="upcoming">
+   登録した作品はありません。
+  </div>
+
+  <div class="modalActions">
+   <button type="button" class="iconbtn" id="worksClose">閉じる</button>
+  </div>
+ </form>
+</dialog>
+<dialog id="searchDialog">
+ <form class="modal" id="searchForm">
+  <h2>新着情報を探す</h2>
+  <p class="hint">登録した作品の公式情報から、新しいイベントやグッズ情報を探します。</p>
+
+  <h3>検索対象の作品</h3>
+  <div id="searchWorksList" class="upcoming">
+   作品が登録されていません。
+  </div>
+
+  <div class="modalActions">
+   <button type="button" class="iconbtn" id="searchClose">閉じる</button>
+   <button type="submit" class="btn primary">検索する</button>
+  </div>
+
+  <h3>検索結果</h3>
+  <div id="searchResults" class="upcoming">
+   まだ検索していません。
+  </div>
+ </form>
+</dialog>
+<script>
+const $=id=>document.getElementById(id);
+const KEY='lumiere_events_v1',BG='lumiere_bg_v1';
+let events=[];try{events=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+let cursor=new Date();cursor=new Date(cursor.getFullYear(),cursor.getMonth(),1);
+let selectedDate=new Date();
+const categories={event:'イベント',goods:'グッズ',birthday:'記念日',daily:'日常'};
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{let [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+function save(){localStorage.setItem(KEY,JSON.stringify(events))}
+const WORKS_KEY='lumiere_works_v1';
+let works=[];
+try{
+ works=JSON.parse(localStorage.getItem(WORKS_KEY)||'[]');
+ if(!Array.isArray(works))works=[];
+}catch(e){
+ works=[];
+}
+
+function saveWorks(){
+ localStorage.setItem(WORKS_KEY,JSON.stringify(works));
+}
+
+function renderWorks(){
+ const list=$('worksList');
+
+ if(!works.length){
+  list.textContent='登録した作品はありません。';
+  return;
+ }
+
+ list.innerHTML=works.map((work,index)=>`
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;padding:9px;background:#f2f7fb;border-radius:10px">
+   <b>${escapeHtml(work)}</b>
+   <button type="button" class="iconbtn" data-work-delete="${index}">削除</button>
+  </div>
+ `).join('');
+}
+
+$('worksBtn').onclick=()=>{
+ renderWorks();
+ $('worksDialog').showModal();
+};
+
+$('worksClose').onclick=()=>{
+ $('worksDialog').close();
+};
+
+$('worksForm').onsubmit=e=>{
+ e.preventDefault();
+
+ const name=$('workName').value.trim();
+
+ if(!name)return;
+
+ if(works.some(w=>w.toLowerCase()===name.toLowerCase())){
+  alert('この作品は登録済みです。');
+  return;
+ }
+
+ works.push(name);
+ saveWorks();
+ $('workName').value='';
+ renderWorks();
+};
+
+$('worksList').onclick=e=>{
+ const button=e.target.closest('[data-work-delete]');
+ if(!button)return;
+
+ const index=Number(button.dataset.workDelete);
+ if(!confirm('「'+works[index]+'」を削除しますか？'))return;
+
+ works.splice(index,1);
+ saveWorks();
+ renderWorks();
+};
+
+function renderSearchWorks(){
+ const list=$('searchWorksList');
+
+ if(!works.length){
+  list.textContent='作品が登録されていません。先に作品管理から追加してください。';
+  return;
+ }
+
+ list.innerHTML=works.map((work,index)=>`
+  <label style="display:flex;align-items:center;gap:8px;padding:8px;margin:6px 0;background:#f2f7fb;border-radius:10px">
+   <input type="checkbox" class="search-work" value="${index}" checked>
+   ${escapeHtml(work)}
+  </label>
+ `).join('');
+}
+
+$('searchBtn').onclick=()=>{
+ renderSearchWorks();
+ $('searchResults').textContent='検索する作品を選んでください。';
+ $('searchDialog').showModal();
+};
+
+$('searchClose').onclick=()=>{
+ $('searchDialog').close();
+};
+
+$('searchForm').onsubmit=async e=>{
+ e.preventDefault();
+ const selected=[...document.querySelectorAll('.search-work:checked')].map(input=>works[Number(input.value)]).filter(Boolean);
+ if(!selected.length){alert('検索する作品を選んでください。');return;}
+ const results=$('searchResults');results.textContent='検索中です…';
+ const button=$('searchForm').querySelector('button[type=submit]');button.disabled=true;
+ try{
+  const response=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({works:selected})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||'検索に失敗しました');
+  results.innerHTML='';const count=document.createElement('p');count.textContent=`検索完了（本日の残り ${data.remaining} 回）`;results.appendChild(count);
+  if(!data.results?.length){const empty=document.createElement('p');empty.textContent='検索結果がありませんでした。';results.appendChild(empty);return;}
+  data.results.forEach(item=>{
+   const card=document.createElement('div');card.style.cssText='padding:10px;margin:9px 0;background:#f2f7fb;border-radius:12px';
+   const title=document.createElement('a');title.href=item.url;title.target='_blank';title.rel='noopener noreferrer';title.textContent=item.title;title.style.cssText='font-weight:700;color:#315474';card.appendChild(title);
+   const date=document.createElement('small');date.textContent=`公開日：${item.date_label||'日付不明'}`;date.style.cssText='display:block;margin-top:5px;color:#8297aa';card.appendChild(date);
+   const desc=document.createElement('p');desc.textContent=item.content||'';desc.style.cssText='margin:6px 0;color:#647f98';card.appendChild(desc);
+   const source=document.createElement('small');source.textContent=`対象作品：${item.work} ／ ${item.domain||''}`;source.style.color='#8297aa';card.appendChild(source);
+   const add=document.createElement('button');add.type='button';add.className='iconbtn';add.textContent='この情報を予定に追加';add.style.cssText='display:block;margin-top:8px';
+   add.onclick=()=>openForm({title:item.title,start:iso(selectedDate),end:iso(selectedDate),category:'event',color:'#648bb3',memo:`情報元：${item.url}\n${item.content||''}`,repeat:'none'});
+   card.appendChild(add);results.appendChild(card);
+  });
+ }catch(err){results.textContent='検索できませんでした：'+err.message;}
+ finally{button.disabled=false;}
+};
+
+$('exportBtn').onclick=()=>{
+ const data=JSON.stringify(events,null,2);
+ const blob=new Blob([data],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='lumiere_backup.json';
+ a.click();
+ URL.revokeObjectURL(url);
+};$('importBtn').onclick=()=>$('importFile').click();
+
+$('importFile').onchange=e=>{
+ const input=e.target;
+ const file=input.files[0];
+ if(!file)return;
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+  input.value='';
+
+  try{
+   const imported=JSON.parse(reader.result);
+
+   if(!Array.isArray(imported)||
+      !imported.every(ev=>
+       ev&&typeof ev==='object'&&
+       typeof ev.title==='string'&&
+       typeof ev.start==='string'&&
+       typeof ev.end==='string'
+      )){
+    alert('このファイルはLumièreのバックアップではないようです。');
+    return;
+   }
+
+   if(!confirm('現在の予定を読み込んだデータに置き換えます。よろしいですか？')){
+    return;
+   }
+
+   events=imported;
+   save();
+   render();
+   alert('バックアップを復元しました！');
+
+  }catch(err){
+   alert('ファイルを読み込めませんでした。');
+  }
+ };
+
+ reader.onerror=()=>{
+  input.value='';
+  alert('ファイルの読み込みに失敗しました。');
+ };
+
+ reader.readAsText(file);
+};
+function initBg(){let b=localStorage.getItem(BG);if(b)$('hero').style.backgroundImage=`linear-gradient(90deg,#eaf3f4aa,#eaf3f422),url("${b}")`}
+initBg();
+$('bgBtn').onclick=()=>$('bgFile').click();
+$('bgFile').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{localStorage.setItem(BG,r.result);initBg()}catch(err){alert('画像が大きすぎるようです。小さめの画像を選んでください。')}};r.readAsDataURL(f);e.target.value=''};
+$('prev').onclick=()=>{cursor.setMonth(cursor.getMonth()-1);render()};
+$('next').onclick=()=>{cursor.setMonth(cursor.getMonth()+1);render()};
+$('today').onclick=()=>{let n=new Date();cursor=new Date(n.getFullYear(),n.getMonth(),1);selectedDate=n;render()};
+$('addBtn').onclick=()=>openForm();
+$('cancelBtn').onclick=()=>$('eventDialog').close();
+function openForm(ev=null,defaultDate=null){
+ $('eventForm').reset();
+ $('eventId').value=ev?.id||'';
+ $('dialogTitle').textContent=ev?'予定を編集':'予定を追加';
+
+ $('title').value=ev?.title||'';
+ $('start').value=ev?.start||iso(defaultDate||selectedDate);
+ $('end').value=ev?.end||ev?.start||iso(defaultDate||selectedDate);
+ $('category').value=ev?.category||'event';
+ $('color').value=ev?.color||'#648bb3';
+ $('memo').value=ev?.memo||'';
+
+ $('repeat').value=ev?.repeat||'none';
+ $('repeatUntil').value=ev?.repeatUntil||'';
+ $('repeatNth').value=ev?.nth||'1';
+ $('repeatWeekday').value=String(ev?.weekday??0);
+
+ document.querySelectorAll('input[name="weekDay"]').forEach(cb=>{
+  cb.checked=(ev?.weekdays||[]).includes(Number(cb.value));
+ });
+
+ $('repeat').dispatchEvent(new Event('change'));
+
+ $('deleteBtn').hidden=!ev;
+ $('deleteBtn').onclick=()=>{
+  if(confirm('この予定を削除しますか？')){
+   events=events.filter(x=>x.id!==ev.id);
+   save();
+   $('eventDialog').close();
+   render();
+  }
+ };
+
+ $('eventDialog').showModal();
+}
+$('repeat').addEventListener('change',()=>{
+ const type=$('repeat').value;
+
+ $('repeatOptions').hidden=type==='none';
+
+ $('weeklyOptions').hidden=type!=='weekly';
+ $('nthOptions').hidden=type!=='monthlyNth';
+});
+$('eventForm').onsubmit=e=>{e.preventDefault();let s=$('start').value,en=$('end').value;if(en<s){alert('終了日は開始日以降にしてください');return}
+ let id=$('eventId').value;
+let item={
+ id:id||String(Date.now()),
+ title:$('title').value.trim(),
+ start:s,
+ end:en,
+ category:$('category').value,
+ color:$('color').value,
+ memo:$('memo').value,
+ repeat:$('repeat').value,
+ repeatUntil:$('repeatUntil').value,
+ weekdays:[...document.querySelectorAll('input[name="weekDay"]:checked')].map(x=>Number(x.value)),
+ nth:$('repeatNth').value,
+ weekday:Number($('repeatWeekday').value)
+};
+ if(id)events=events.map(x=>x.id===id?item:x);else events.push(item);save();$('eventDialog').close();render()};
+function getOccurrences(from,to){
+ const result=[];
+
+ events.forEach(ev=>{
+  const base=parse(ev.start);
+  const originalEnd=parse(ev.end);
+  const duration=Math.round((originalEnd-base)/86400000);
+  const type=ev.repeat||'none';
+
+  if(type==='none'){
+   if(base<=to&&originalEnd>=from) result.push(ev);
+   return;
+  }
+
+  let cursor=new Date(Math.max(
+   base.getTime(),
+   from.getTime()-duration*86400000
+  ));
+
+  const until=ev.repeatUntil?parse(ev.repeatUntil):to;
+
+  for(let d=cursor;d<=to&&d<=until;d.setDate(d.getDate()+1)){
+   let match=false;
+
+   if(type==='yearly'){
+    match=d.getMonth()===base.getMonth()&&d.getDate()===base.getDate();
+   }
+
+   if(type==='monthly'){
+    match=d.getDate()===base.getDate();
+   }
+
+   if(type==='weekly'){
+    const weekdays=ev.weekdays?.length?ev.weekdays:[base.getDay()];
+    match=weekdays.includes(d.getDay());
+   }
+
+   if(type==='monthlyNth'){
+    const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    const nth=Math.floor((d.getDate()-1)/7)+1;
+    const isLast=d.getDate()+7>lastDay;
+    match=d.getDay()===Number(ev.weekday)&&
+     (ev.nth==='last'?isLast:nth===Number(ev.nth));
+   }
+
+   if(match&&d>=base){
+    const start=new Date(d);
+    const end=new Date(d);
+    end.setDate(end.getDate()+duration);
+
+    result.push({...ev,start:iso(start),end:iso(end)});
+   }
+  }
+ });
+
+ return result;
+}
+function render(){
+ const y=cursor.getFullYear(),m=cursor.getMonth();$('monthLabel').innerHTML=`${y}年 ${m+1}月 <span>${['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m]}</span>`;
+ let first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());let weeks=[];
+ for(let w=0;w<6;w++){let arr=[];for(let d=0;d<7;d++){let dt=new Date(start);dt.setDate(start.getDate()+w*7+d);arr.push(dt)}if(w>=5&&arr[0].getMonth()!==m)break;weeks.push(arr)}
+ $('weeks').innerHTML='';
+ weeks.forEach(days=>{
+  let week=document.createElement('div');week.className='week';
+  days.forEach(dt=>{let cell=document.createElement('div');cell.className='day'+(dt.getMonth()!==m?' other':'')+(iso(dt)===iso(new Date())?' today':'')+(iso(dt)===iso(selectedDate)?' selected':'');cell.innerHTML=`<span class="daynum">${dt.getDate()}</span>`;cell.onclick=()=>{selectedDate=dt;openForm(null,dt)};week.appendChild(cell)});
+  let bars=document.createElement('div');bars.className='bars';
+  let ws=days[0],we=days[6],weekEvents=getOccurrences(ws,we);
+  let occupied=[];
+  weekEvents.sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end)).forEach(ev=>{
+   let s=parse(ev.start),en=parse(ev.end),a=Math.max(0,Math.round((Math.max(s,ws)-ws)/86400000)),b=Math.min(6,Math.round((Math.min(en,we)-ws)/86400000));
+   let lane=0;while(occupied[lane]?.some(x=>x[0]<=b&&x[1]>=a))lane++;
+   occupied[lane]=occupied[lane]||[];occupied[lane].push([a,b]);
+   let bar=document.createElement('div');bar.className='bar';bar.style.left=`calc(${a} * 100% / 7 + 2px)`;bar.style.width=`calc((${b-a+1}) * 100% / 7 - 4px)`;bar.style.top=`${lane*20}px`;bar.style.background=ev.color;bar.textContent=ev.title;bar.title=ev.title;bar.onclick=e=>{e.stopPropagation();openForm(events.find(x=>x.id===ev.id)||ev)};bars.appendChild(bar);
+  });
+  week.appendChild(bars);week.style.minHeight=`${Math.max(91,43+(occupied.length*20)+8)}px`;week.querySelectorAll('.day').forEach(d=>d.style.minHeight=week.style.minHeight);$('weeks').appendChild(week);
+ });
+let monthEvents=getOccurrences(new Date(y,m,1),new Date(y,m+1,0)).sort((a,b)=>a.start.localeCompare(b.start));
+ $('upcoming').innerHTML=monthEvents.length?monthEvents.map(ev=>`<div style="margin:5px 0"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${ev.color};margin-right:6px"></span><b>${escapeHtml(ev.title)}</b><br><span style="color:#8499ad;font-size:11px">${ev.start===ev.end?ev.start:ev.start+' 〜 '+ev.end}</span></div>`).join(''):'この月の予定はまだありません。';
+ let used=[...new Set(monthEvents.map(e=>e.category))];$('legend').innerHTML=used.map(c=>`<span><i class="dot" style="background:${monthEvents.find(e=>e.category===c).color}"></i>${categories[c]}</span>`).join('');
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+
+
+$('repeat').onchange=()=>{
+  const type=$('repeat').value;
+  $('repeatOptions').hidden=type==='none';
+  $('weeklyOptions').hidden=type!=='weekly';
+  $('nthOptions').hidden=type!=='monthlyNth';
+};
+$('repeat').onchange();
+render();
+</script>
+</body></html>
