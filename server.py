@@ -168,6 +168,14 @@ class Handler(SimpleHTTPRequestHandler):
                     continue
                 page_title = (item.get('title') or url).strip()
                 content = clean_page_text((item.get('content') or '').strip())
+                # アフィリエイト・商品紹介中心の記事を除外
+                if any(word in page_title + ' ' + content for word in (
+                   'アフィリエイト', 'アフィリエイト広告',
+                   'おすすめランキング', 'ランキング形式で紹介',
+                   '買ってよかった', '実際に買ってみた',
+                   'PR案件', '広告記事'
+               )):
+                   continue
                 bullets = re.findall(r'(?:^|\n)\s*(?:[＊*・]|[-•])\s*[^\n]{8,}', content)
                 if len(bullets) >= 2 or ('NEWS' in page_title.upper() and len(re.findall(r'20\d{2}年', content)) >= 2):
                     continue
