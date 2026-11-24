@@ -6,6 +6,7 @@ import json, os, urllib.request, urllib.error, datetime, re, unicodedata
 
 ROOT = Path(__file__).resolve().parent
 os.chdir(ROOT)
+EXCLUDED_DOMAINS_FILE = ROOT / 'excluded_domains.json'
 
 
 def load_env():
