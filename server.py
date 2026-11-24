@@ -7,6 +7,14 @@ import json, os, urllib.request, urllib.error, datetime, re, unicodedata
 ROOT = Path(__file__).resolve().parent
 os.chdir(ROOT)
 EXCLUDED_DOMAINS_FILE = ROOT / 'excluded_domains.json'
+def load_excluded_domains():
+    if not EXCLUDED_DOMAINS_FILE.exists():
+        return []
+    try:
+        data = json.loads(EXCLUDED_DOMAINS_FILE.read_text(encoding='utf-8'))
+        return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, OSError):
+        return []
 
 
 def load_env():
