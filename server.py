@@ -99,7 +99,19 @@ def is_same_announcement(a, b):
     # 類似タイトルはかなり近い場合だけ統合する（誤統合を抑える）
     return SequenceMatcher(None, ta, tb).ratio() >= 0.94 and min(len(ta), len(tb)) >= 8
 
+def official_score(item):
+    domain = urlparse(item.get('url', '')).netloc.lower()
+    title = item.get('title', '').lower()
 
+    score = 0
+
+    if domain in ('x.com', 'twitter.com', 'www.x.com', 'www.twitter.com'):
+        score += 2
+
+    if any(word in title for word in ('公式', 'official')):
+        score += 2
+
+    return score
 def merge_duplicate_results(items):
     """同一告知らしい検索結果を1件にまとめ、情報源URLを保持する。"""
     groups = []
@@ -164,11 +176,11 @@ class Handler(SimpleHTTPRequestHandler):
             out = []
             for item in result.get('results', []):
                 url = item.get('url', '')
-                if not url.startswith(('http://', 'https://')):
-                    continue
+                if not url.startswith(('http://', 'https://')):continue
                 page_title = (item.get('title') or url).strip()
-                if not any(work.lower() in page_title.lower() for work in works):continue
                 content = clean_page_text((item.get('content') or '').strip())
+                search_text = (page_title + ' ' + content).lower()
+                if not any(work.lower() in search_text for work in works):continue
                 # アフィリエイト・商品紹介中心の記事を除外
                 if any(word in page_title + ' ' + content for word in (
                    'アフィリエイト', 'アフィリエイト広告',
@@ -194,7 +206,7 @@ class Handler(SimpleHTTPRequestHandler):
                             date_label = sort_date
                 out.append({'title': page_title, 'url': url, 'content': content, 'domain': urlparse(url).netloc, 'work': '・'.join(works), 'published_date': sort_date, 'date_label': date_label})
             out = merge_duplicate_results(out)
-            out.sort(key=lambda x: (bool(x['published_date']), x['published_date']), reverse=True)
+            out.sort(key=lambda x: (official_score(x), bool(x['published_date']), x['published_date']), reverse=True)
             self.reply(200, {'results': out, 'remaining': max(0, 3 - state['count'])})
         except Exception as e:
             self.reply(500, {'error': str(e)})
