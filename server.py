@@ -8,6 +8,18 @@ ROOT = Path(__file__).resolve().parent
 os.chdir(ROOT)
 EXCLUDED_DOMAINS_FILE = ROOT / 'excluded_domains.json'
 def load_excluded_domains():
+
+    def save_excluded_domains(domains):
+    EXCLUDED_DOMAINS_FILE.write_text(
+        json.dumps(sorted(set(domains)), ensure_ascii=False, indent=2),
+        encoding='utf-8'
+    )
+    def is_excluded_domain(url, excluded_domains):
+    domain = urlparse(url).netloc.lower().split(':')[0]
+    return any(
+        domain == excluded or domain.endswith('.' + excluded)
+        for excluded in excluded_domains
+    )
     if not EXCLUDED_DOMAINS_FILE.exists():
         return []
     try:
@@ -182,9 +194,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.reply(502, {'error': f'Tavily HTTP {e.code}: {detail}'})
             state['count'] += 1
             USAGE_FILE.write_text(json.dumps(state, ensure_ascii=False), encoding='utf-8')
+            excluded_domains = load_excluded_domains()
             out = []
             for item in result.get('results', []):
                 url = item.get('url', '')
+                if is_excluded_domain(url, excluded_domains):
+                        continue
                 if not url.startswith(('http://', 'https://')):continue
                 page_title = (item.get('title') or url).strip()
                 content = clean_page_text((item.get('content') or '').strip())
