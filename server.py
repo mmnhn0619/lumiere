@@ -167,6 +167,7 @@ class Handler(SimpleHTTPRequestHandler):
                 if not url.startswith(('http://', 'https://')):
                     continue
                 page_title = (item.get('title') or url).strip()
+                if not any(work.lower() in page_title.lower() for work in works):continue
                 content = clean_page_text((item.get('content') or '').strip())
                 # アフィリエイト・商品紹介中心の記事を除外
                 if any(word in page_title + ' ' + content for word in (
