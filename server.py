@@ -162,7 +162,7 @@ class Handler(SimpleHTTPRequestHandler):
             if state['count'] >= 3:
                 return self.reply(429, {'error': '本日の検索上限（3回）に達しました。日本時間0時にリセットされます。'})
             year = datetime.datetime.now(JST).year
-            query = ' OR '.join(f'"{w}"' for w in works) + f' 公式サイト 公式X 公式発表 最新 新着 {year} イベント コラボカフェ 展示会 キャンペーン グッズ 発売 予約 開催'
+            query = ' OR '.join(f'"{w}"' for w in works) + f' 公式サイト 公式X 公式発表 最新 新着 {year} イベント コラボカフェ 展示会 キャンペーン グッズ 発売 予約 開催 site:x.com OR site:twitter.com'
             body = json.dumps({'query': query, 'topic': 'general', 'search_depth': 'advanced', 'max_results': 20, 'include_answer': False, 'time_range': 'month'}).encode('utf-8')
             req = urllib.request.Request('https://api.tavily.com/search', data=body, headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'}, method='POST')
             try:
